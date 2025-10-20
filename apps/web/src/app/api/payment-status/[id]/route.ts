@@ -1,3 +1,5 @@
+import "../../../../config/otel";
+
 import { NextRequest } from "next/server";
 
 // SSE endpoint to stream payment status updates

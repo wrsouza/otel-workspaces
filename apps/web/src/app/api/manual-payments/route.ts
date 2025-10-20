@@ -1,3 +1,5 @@
+import "../../../config/otel";
+
 export async function POST(request: Request) {
   const { orderId, amount } = await request.json();
 
