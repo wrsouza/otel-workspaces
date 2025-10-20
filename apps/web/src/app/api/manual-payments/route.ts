@@ -1,7 +1,7 @@
 import { tracer } from "../../../config";
 
 export async function POST(request: Request) {
-  return tracer.startActiveSpan("api/manual-payments (POST)", async (span) => {
+  return tracer.startActiveSpan("api/manual-payments", async (span) => {
     try {
       const { orderId, amount } = await request.json();
       const response = await fetch("http://localhost:4001/manual-payments", {
