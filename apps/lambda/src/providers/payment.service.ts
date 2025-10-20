@@ -1,6 +1,9 @@
+import Logger from "../config/logger";
 import { RedisService } from "./redis.service";
 
 export class PaymentService {
+  private readonly logger = new Logger(PaymentService.name);
+
   constructor(private readonly redis: RedisService) {}
 
   async process(orderId: string): Promise<void> {
@@ -8,6 +11,7 @@ export class PaymentService {
 
     const order = await this.redis.get(`order:${orderId}`);
     if (!order) {
+      this.logger.error("Order not found", { orderId });
       throw new Error(`Order with ID ${orderId} not found`);
     }
     const parsedOrder = JSON.parse(order);
@@ -15,6 +19,6 @@ export class PaymentService {
 
     await this.redis.set(`order:${orderId}`, JSON.stringify(parsedOrder));
     await this.redis.disconnect();
-    console.log("payment processed:", parsedOrder);
+    this.logger.info("payment processed:", parsedOrder);
   }
 }
