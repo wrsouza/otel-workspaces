@@ -1,0 +1,29 @@
+{
+  "name": "@otel-workspaces/lambda",
+  "version": "0.0.1",
+  "main": "index.js",
+  "scripts": {
+    "prebuild": "rm -rf .build",
+    "dev": "npm run prebuild && sls offline"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.149",
+    "@types/node": "^22.14.0",
+    "@types/redis": "^4.0.10",
+    "serverless": "^3.39.0",
+    "serverless-offline": "^13.8.1",
+    "serverless-offline-sqs": "^8.0.0",
+    "serverless-plugin-conditional-functions": "^1.0.8",
+    "serverless-plugin-typescript": "2.1.5",
+    "serverless-prune-plugin": "^2.0.2",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "redis": "^5.8.3"
+  }
+}

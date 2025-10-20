@@ -1,0 +1,89 @@
+services:
+  localstack:
+    image: localstack/localstack:latest
+    container_name: localstack
+    ports:
+      - 4566:4566
+    environment:
+      - SERVICES=sns,sqs
+      - CLEAR_TMP_FOLDER=0
+    volumes:
+      - ./docker/localstack/localstack.sh:/etc/localstack/init/ready.d/localstack.sh
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    command:
+      - --config.file=/etc/prometheus.yaml
+      - --web.enable-remote-write-receiver
+      - --enable-feature=otlp-write-receiver
+      - --enable-feature=exemplar-storage
+      - --enable-feature=native-histograms
+    volumes:
+      - ./docker/prometheus/prometheus.yaml:/etc/prometheus.yaml
+      #- /etc/localtime:/etc/localtime:ro
+      #- ./data/prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+  tempo:
+    image: grafana/tempo:latest
+    container_name: tempo
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./docker/tempo/tempo.yaml:/etc/tempo.yaml
+    ports:
+      - "3200:3200" # tempo
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+  opentelemetry-collector:
+    hostname: opentelemetry-collector
+    image: otel/opentelemetry-collector:latest
+    container_name: opentelemetry
+    command:
+      [
+        "--config=/etc/otel-collector-config.yaml",
+        "--feature-gates=pkg.translator.prometheus.NormalizeName",
+      ]
+    volumes:
+      - ./docker/otel/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    restart: unless-stopped
+    environment:
+      - DEPLOY_ENV=dev
+    ports:
+      - "8888:8888" # Prometheus metrics exposed by the collector
+      - "8889:8889" # Prometheus exporter metrics
+      - "4317:4317" # OTLP gRPC receiver
+      - "4318:4318" # OTLP HTTP receiver
+    depends_on:
+      - prometheus
+      - tempo
+      - loki
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_BASIC_ENABLED=false
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+      - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor metricsSummary
+      - GF_INSTALL_PLUGINS=https://storage.googleapis.com/integration-artifacts/grafana-exploretraces-app/grafana-exploretraces-app-latest.zip;grafana-traces-app
+    volumes:
+      - ./dashboards:/var/lib/grafana/dashboards
+      - ./docker/grafana/dashboard.yaml:/etc/grafana/provisioning/dashboards/dashboard.yaml
+      - ./docker/grafana/datasource.yaml:/etc/grafana/provisioning/datasources/datasource.yaml
+    depends_on:
+      - loki
+      - prometheus
+      - tempo
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"

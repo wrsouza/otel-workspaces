@@ -1,0 +1,21 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: "otel-collector"
+    scrape_interval: 2s
+    static_configs:
+      - targets: ["opentelemetry-collector:8889"]
+  - job_name: "tempo"
+    static_configs:
+      - targets: ["tempo:3200"]
+  - job_name: "k6" # Configuration to scrape k6 metrics
+    static_configs:
+      - targets: ["k6:6565"] # k6's metrics endpoint (using Docker service name)
+    scrape_interval: 5s # More frequent scraping for k6 during tests
+    metrics_path: /metrics # Path where metrics are exposed
+
+storage:
+  tsdb:
+    out_of_order_time_window: 30m

@@ -1,0 +1,50 @@
+service: ts-project
+app: ts-project
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: us-east-1
+
+plugins:
+  - serverless-prune-plugin
+  - serverless-plugin-conditional-functions
+  - serverless-plugin-typescript
+  - serverless-offline-sqs
+  - serverless-offline
+
+custom:
+  lambdaInsights:
+    defaultLambdaInsights: true
+  prune:
+    automatic: true
+    number: 3
+  serverless-offline:
+    port: 4002
+    httpPort: 4002
+    noPrependStageInUrl: true
+  serverless-offline-sqs:
+    autoCreate: false
+    apiVersion: "2012-11-05"
+    endpoint: http://0.0.0.0:4566
+    region: us-east-1
+    accessKeyId: na
+    secretAccessKey: na
+    skipCacheInvalidation: false
+
+functions:
+  manualProcess:
+    enabled: true
+    handler: src/manual-process/index.handler
+    events:
+      - http:
+          path: /manual-process
+          method: post
+
+  autoProcess:
+    enabled: true
+    handler: src/auto-process/index.handler
+    events:
+      - sqs:
+          arn: >-
+            arn:aws:sqs:us-east-1:000000000000:process-payment
