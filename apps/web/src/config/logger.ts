@@ -19,7 +19,7 @@ export default class Logger {
       body: message,
       attributes: {
         context: this.context,
-        data: JSON.stringify(data),
+        ...data,
       },
     });
   }
@@ -30,7 +30,7 @@ export default class Logger {
       body: message,
       attributes: {
         context: this.context,
-        data: JSON.stringify(data),
+        ...data,
       },
     });
   }
@@ -41,7 +41,7 @@ export default class Logger {
       body: message,
       attributes: {
         context: this.context,
-        data: JSON.stringify(data),
+        ...data,
       },
     });
   }
@@ -52,7 +52,7 @@ export default class Logger {
       body: message,
       attributes: {
         context: this.context,
-        data: JSON.stringify(data),
+        ...data,
       },
     });
   }

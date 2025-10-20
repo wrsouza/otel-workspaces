@@ -44,8 +44,8 @@ const batchLogRecordProcessor = new BatchLogRecordProcessor(logExporter);
 
 const sdk = new NodeSDK({
   resource: resourceFromAttributes({
-    [ATTR_SERVICE_NAME]: process.env.OTEL_SERVICE_NAME ?? "lambda-service",
-    [ATTR_SERVICE_VERSION]: process.env.OTEL_SERVICE_VERSION ?? "0.0.1",
+    [ATTR_SERVICE_NAME]: "lambda-service",
+    [ATTR_SERVICE_VERSION]: "0.0.1",
   }),
   metricReaders: [metricReader],
   traceExporter,

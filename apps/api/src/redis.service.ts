@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClient, RedisClientType } from 'redis';
+import { tracer } from './config';
 
 @Injectable()
 export class RedisService {
@@ -13,18 +14,31 @@ export class RedisService {
   }
 
   async connect(): Promise<void> {
-    await this.client.connect();
+    return tracer.startActiveSpan('RedisService.connect', async (span) => {
+      await this.client.connect();
+      span.end();
+    });
   }
 
   async disconnect(): Promise<void> {
-    await this.client.quit();
+    return tracer.startActiveSpan('RedisService.disconnect', async (span) => {
+      await this.client.quit();
+      span.end();
+    });
   }
 
   async set(key: string, value: string): Promise<void> {
-    await this.client.set(key, value);
+    return tracer.startActiveSpan('RedisService.set', async (span) => {
+      await this.client.set(key, value);
+      span.end();
+    });
   }
 
   async get(key: string): Promise<string | null> {
-    return this.client.get(key);
+    return tracer.startActiveSpan('RedisService.get', async (span) => {
+      const value = await this.client.get(key);
+      span.end();
+      return value;
+    });
   }
 }

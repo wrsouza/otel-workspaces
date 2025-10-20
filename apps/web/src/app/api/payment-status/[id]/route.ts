@@ -1,69 +1,81 @@
-import "../../../../config/otel";
-
 import { NextRequest } from "next/server";
+import { tracer } from "../../../../config";
 
 // SSE endpoint to stream payment status updates
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-
-  const stream = new ReadableStream({
-    async start(controller) {
+  return tracer.startActiveSpan(
+    "api/payment-status/[id] (GET)",
+    async (span) => {
       try {
-        const response = await fetch(
-          `http://localhost:4001/payment-status/${id}`
-        );
-        const reader = response.body?.getReader();
+        const { id } = await params;
 
-        if (!reader) {
-          controller.close();
-          return;
-        }
+        const stream = new ReadableStream({
+          async start(controller) {
+            try {
+              const response = await fetch(
+                `http://localhost:4001/payment-status/${id}`
+              );
+              const reader = response.body?.getReader();
 
-        const decoder = new TextDecoder();
-
-        while (true) {
-          const { done, value } = await reader.read();
-
-          if (done) {
-            controller.close();
-            break;
-          }
-
-          const chunk = decoder.decode(value);
-          const lines = chunk.split("\n");
-
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              const data = line.slice(6);
-              try {
-                const result = JSON.parse(data);
-                controller.enqueue(`data: ${data}\n\n`);
-
-                if (result.status !== "processing") {
-                  controller.close();
-                  return;
-                }
-              } catch {
-                // Skip invalid JSON
+              if (!reader) {
+                controller.close();
+                return;
               }
-            }
-          }
-        }
-      } catch (error) {
-        controller.close();
-      }
-    },
-  });
 
-  return new Response(stream, {
-    headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      Connection: "keep-alive",
-      "Access-Control-Allow-Origin": "*",
-    },
-  });
+              const decoder = new TextDecoder();
+
+              while (true) {
+                const { done, value } = await reader.read();
+
+                if (done) {
+                  controller.close();
+                  break;
+                }
+
+                const chunk = decoder.decode(value);
+                const lines = chunk.split("\n");
+
+                for (const line of lines) {
+                  if (line.startsWith("data: ")) {
+                    const data = line.slice(6);
+                    try {
+                      const result = JSON.parse(data);
+                      controller.enqueue(`data: ${data}\n\n`);
+
+                      if (result.status !== "processing") {
+                        controller.close();
+                        return;
+                      }
+                    } catch {
+                      // Skip invalid JSON
+                    }
+                  }
+                }
+              }
+            } catch (error) {
+              controller.close();
+            }
+          },
+        });
+
+        return new Response(stream, {
+          headers: {
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+            Connection: "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+          },
+        });
+      } catch (err) {
+        span.recordException(err as Error);
+        span.setStatus({ code: 2, message: String(err) });
+        throw err;
+      } finally {
+        span.end();
+      }
+    }
+  );
 }

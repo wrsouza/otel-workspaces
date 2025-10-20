@@ -10,10 +10,7 @@ export default class Logger {
 
   constructor(context: string = "default") {
     this.context = context;
-    this.logger = logs.getLogger(
-      process.env.OTEL_SERVICE_NAME!,
-      process.env.OTEL_SERVICE_VERSION!
-    );
+    this.logger = logs.getLogger("lambda-service", "0.0.1");
   }
 
   info(message: string, data = {}) {
@@ -22,7 +19,7 @@ export default class Logger {
       body: message,
       attributes: {
         context: this.context,
-        data: JSON.stringify(data),
+        ...data,
       },
     });
   }
@@ -33,7 +30,7 @@ export default class Logger {
       body: message,
       attributes: {
         context: this.context,
-        data: JSON.stringify(data),
+        ...data,
       },
     });
   }
@@ -44,7 +41,7 @@ export default class Logger {
       body: message,
       attributes: {
         context: this.context,
-        data: JSON.stringify(data),
+        ...data,
       },
     });
   }
@@ -55,7 +52,7 @@ export default class Logger {
       body: message,
       attributes: {
         context: this.context,
-        data: JSON.stringify(data),
+        ...data,
       },
     });
   }
